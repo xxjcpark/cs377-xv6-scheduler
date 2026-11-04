@@ -76,22 +76,27 @@ main(int argc, char *argv[])
 
   uint end = uptime();
 
-  uint total_turnaround = 0, total_response = 0;
+  uint total_turnaround = 0, total_response = 0, total_wait_time = 0;
   printf("BEGIN_STATS_IND\n");
-  printf("pid,arrival,first_run,completion,wait_time,run_time,turnaround,response\n");
+  printf(
+    "pid,arrival,first_run,completion,wait_time,run_time,turnaround,response\n");
   for (int i = 0; i < numchildren; i++) {
     struct procstat *s = &stats[i];
     uint turnaround = s->completion - s->arrival;
     uint response = s->first_run - s->arrival;
     total_turnaround += turnaround;
     total_response += response;
-    printf("%d,%d,%d,%d,%d,%d,%d,%d\n", s->pid, s->arrival, s->first_run, s->completion, s->wait_time, s->run_time, turnaround, response);
+    total_wait_time += s->wait_time;
+    printf("%d,%d,%d,%d,%d,%d,%d,%d\n", s->pid, s->arrival, s->first_run,
+           s->completion, s->wait_time, s->run_time, turnaround, response);
   }
   printf("END_STATS_IND\n");
 
   printf("BEGIN_STATS_TOTAL\n");
-  printf("avg_turnaround,avg_response,total_uptime\n");
-  printf("%d,%d,%d\n",total_turnaround / numchildren, total_response / numchildren, end - start);
+  printf("avg_turnaround,avg_response,avg_wait_time,total_uptime\n");
+  printf("%d,%d,%d,%d\n", total_turnaround / numchildren,
+         total_response / numchildren, total_wait_time / numchildren,
+         end - start);
   printf("END_STATS_TOTAL\n");
   printf("schedload done\n");
   exit(0);
