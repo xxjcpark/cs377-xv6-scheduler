@@ -15,7 +15,7 @@ int
 main(int argc, char *argv[])
 {
   if ((argc - 1) < 2 || (argc - 1) % 2 != 0) {
-    printf("usage: schedtest arrival work [arrival work ...]\n");
+    printf("usage: schedload arrival work [arrival work ...]\n");
     exit(1);
   }
 
@@ -54,7 +54,7 @@ main(int argc, char *argv[])
     }
     int pid = fork();
     if (pid < 0) {
-      printf("schedtest: fork failed\n");
+      printf("schedload: fork failed\n");
       exit(1);
     }
     if (pid == 0) {
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
   for (int i = 0; i < numchildren; i++) {
     int status;
     if (waitstat(&status, &stats[i]) < 0) {
-      printf("schedtest: waitstat failed\n");
+      printf("schedload: waitstat failed\n");
       exit(1);
     }
   }
