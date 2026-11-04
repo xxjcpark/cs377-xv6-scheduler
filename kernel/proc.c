@@ -6,7 +6,6 @@
 #include "proc.h"
 #include "defs.h"
 
-
 struct cpu cpus[NCPU];
 
 struct proc proc[NPROC];
@@ -403,11 +402,11 @@ kwait(uint64 addr, uint64 statsaddr)
           // Found one.
           pid = pp->pid;
           if ((addr != 0 &&
-              copyout(p->pagetable, p->sz, addr, (char *)&pp->xstate,
-                      sizeof(pp->xstate)) < 0) ||
-             (statsaddr != 0 &&
-              copyout(p->pagetable, p->sz, statsaddr, (char *)&pp->stats,
-                      sizeof(pp->stats)) < 0)) {
+               copyout(p->pagetable, p->sz, addr, (char *)&pp->xstate,
+                       sizeof(pp->xstate)) < 0) ||
+              (statsaddr != 0 &&
+               copyout(p->pagetable, p->sz, statsaddr, (char *)&pp->stats,
+                       sizeof(pp->stats)) < 0)) {
             release(&pp->lock);
             release(&wait_lock);
             return -1;
@@ -435,8 +434,6 @@ kwait(uint64 addr, uint64 statsaddr)
     acquire(&wait_lock);
   }
 }
-
-
 
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.

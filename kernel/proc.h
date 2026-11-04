@@ -91,7 +91,7 @@ struct proc {
   int xstate;           // Exit status to be returned to parent's wait
   int pid;              // Process ID
   struct procstat stats;
-  uint last_change;     // Time when process last changed states
+  uint last_change; // Time when process last changed states
 
   // wait_lock must be held when using this:
   struct proc *parent; // Parent process
