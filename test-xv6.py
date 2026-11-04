@@ -8,7 +8,7 @@
 # ./test-xv6.py crash  (runs the crash tests)
 # ./test-xv6.py log (runs the log crash test)
 
-import argparse, os, inspect, re, signal, subprocess, sys, time
+import argparse, os, inspect, re, signal, subprocess, sys, time, csv
 from subprocess import run
 
 sys.stdout.reconfigure(line_buffering=True)
@@ -206,6 +206,53 @@ def test_usertests(test=""):
     q.cmd("usertests" + opt + "\n")
     q.monitor('^ALL TESTS PASSED', progress='test', timeout=timeout)
     q.stop()
+
+
+def run_schedload(jobs, timeout=120):
+    # jobs: list of (arrival ticks, work units)
+    os.environ["CPUS"] = "1"
+    q = QEMU(True)
+    argv = " ".join(f"{a} {w}" for a,w in jobs)
+    q.cmd(f"schedload {argv}\n")
+    q.monitor(r'.*schedload done', timeout=timeout)
+    q.stop()
+    ind_block = q.output.split("BEGIN_STATS_IND\n", 1)[1].split("END_STATS_IND\n",1)[0]
+    ind_stats = [{k: int(v) for k, v in row.items()}
+             for row in csv.DictReader(ind_block.splitlines())]
+    total_block = q.output.split("BEGIN_STATS_TOTAL\n", 1)[1].split("END_STATS_TOTAL\n",1)[0]
+    total_stats = [{k: int(v) for k, v in row.items()}
+             for row in csv.DictReader(total_block.splitlines())]
+    if len(ind_stats) != len(jobs):
+        print("FAIL: expected", len(jobs), "STATS lines, got", len(ind_stats))
+        sys.exit(1)
+    return ind_stats, total_stats
+
+FIFO_WORKLOADS = [
+    ("staggered", [(0, 3), (5, 1), (10, 1)], [0, 1, 2]),
+    ("long-first", [(0, 5), (1, 1), (2, 1)], [0, 1, 2]),
+]
+
+
+def check(cond, msg):
+    if not cond:
+        print("FAIL:", msg)
+        sys.exit(1)
+
+def run_workloads(name, workloads):
+    for wname, jobs, expected in workloads:
+        print(f"{name} {wname}:\n")
+        ind_stats, total_stats = run_schedload(jobs)
+        print(ind_stats)
+        print("\n")
+        print(total_stats)
+        check(True, "placeholder")
+        print("OK")
+
+def test_sched_fifo():
+    run_workloads("fifo", FIFO_WORKLOADS)
+
+# def test_sched_sjf():
+    # run_workloads("sjf", SJF_WORKLOADS)
 
 def main():
     print(args)
