@@ -24,6 +24,7 @@ main(void)
       volatile uint64 x = 0;
       for (uint64 j = 0; j < (i + 1) * WORK; j++)
         x++;
+      (void)x; // read x so newer GCC doesn't flag it as set-but-unused
       exit(0);
     }
   }
