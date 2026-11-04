@@ -359,9 +359,9 @@ kexit(int status)
   wakeup(p->parent);
 
   acquire(&p->lock);
-  
+
   // adds last slice of time running and makes
-  // the additional sched() call add nothing with 
+  // the additional sched() call add nothing with
   // updating last_change to new ticks
   p->run_time += ticks - p->last_change;
   p->last_change = ticks;
@@ -370,8 +370,10 @@ kexit(int status)
   p->xstate = status;
   p->state = ZOMBIE;
 
-  printk("STATS pid=%d name=%s arrival=%d first_run=%d completion=%d wait_time=%d run_time=%d\n",
-    p->pid, p->name, p->arrival, p->first_run, p->completion, p->wait_time, p->run_time);
+  printk(
+    "STATS pid=%d name=%s arrival=%d first_run=%d completion=%d wait_time=%d run_time=%d\n",
+    p->pid, p->name, p->arrival, p->first_run, p->completion, p->wait_time,
+    p->run_time);
   release(&wait_lock);
 
   // Jump into the scheduler, never to return.
@@ -464,11 +466,12 @@ scheduler(void)
         // to release its lock and then reacquire it
         // before jumping back to us.
 
-        // Update wait time and set first_run 
+        // Update wait time and set first_run
         // if it hasn't been set yet.
         p->wait_time += ticks - p->last_change;
         p->last_change = ticks;
-        if(p->first_run == (uint)-1) p->first_run = ticks;
+        if (p->first_run == (uint)-1)
+          p->first_run = ticks;
 
         p->state = RUNNING;
         c->proc = p;

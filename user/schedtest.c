@@ -8,7 +8,7 @@
 // so later children should show larger run_time.
 
 #define NCHILD 3
-#define WORK 100000000ULL // loop iterations per unit of work
+#define WORK   100000000ULL // loop iterations per unit of work
 
 int
 main(void)

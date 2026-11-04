@@ -93,8 +93,7 @@ struct proc {
   uint completion;      // Time Process Finishes Running
   uint wait_time;       // Total time spent RUNNABLE but not running
   uint run_time;        // How long the process has run for
-  uint last_change;     // Time when process last changed states 
-
+  uint last_change;     // Time when process last changed states
 
   // wait_lock must be held when using this:
   struct proc *parent; // Parent process
