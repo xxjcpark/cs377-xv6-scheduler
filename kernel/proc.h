@@ -1,3 +1,5 @@
+#include "procstat.h"
+
 // Saved registers for kernel context switches.
 struct context {
   uint64 ra;
@@ -88,11 +90,7 @@ struct proc {
   int killed;           // If non-zero, have been killed
   int xstate;           // Exit status to be returned to parent's wait
   int pid;              // Process ID
-  uint arrival;         // Time process was created
-  uint first_run;       // Time process first moves to RUNNING state
-  uint completion;      // Time Process Finishes Running
-  uint wait_time;       // Total time spent RUNNABLE but not running
-  uint run_time;        // How long the process has run for
+  struct procstat stats;
   uint last_change;     // Time when process last changed states
 
   // wait_lock must be held when using this:

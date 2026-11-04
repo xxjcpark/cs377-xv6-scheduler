@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "defs.h"
 
+
 struct cpu cpus[NCPU];
 
 struct proc proc[NPROC];
@@ -124,12 +125,13 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
-  p->first_run = (uint)-1;
-  p->arrival = ticks;
+  p->stats.pid = p->pid;
+  p->stats.first_run = (uint)-1;
+  p->stats.arrival = ticks;
+  p->stats.wait_time = 0;
+  p->stats.run_time = 0;
+  p->stats.completion = 0;
   p->last_change = ticks;
-  p->wait_time = 0;
-  p->run_time = 0;
-  p->completion = 0;
 
   // Allocate a trapframe page.
   if ((p->trapframe = (struct trapframe *)kalloc()) == 0) {
@@ -363,17 +365,13 @@ kexit(int status)
   // adds last slice of time running and makes
   // the additional sched() call add nothing with
   // updating last_change to new ticks
-  p->run_time += ticks - p->last_change;
+  p->stats.run_time += ticks - p->last_change;
   p->last_change = ticks;
-  p->completion = ticks;
+  p->stats.completion = ticks;
 
   p->xstate = status;
   p->state = ZOMBIE;
 
-  printk(
-    "STATS pid=%d name=%s arrival=%d first_run=%d completion=%d wait_time=%d run_time=%d\n",
-    p->pid, p->name, p->arrival, p->first_run, p->completion, p->wait_time,
-    p->run_time);
   release(&wait_lock);
 
   // Jump into the scheduler, never to return.
@@ -384,7 +382,7 @@ kexit(int status)
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
 int
-kwait(uint64 addr)
+kwait(uint64 addr, uint64 statsaddr)
 {
   struct proc *pp;
   int havekids, pid;
@@ -404,9 +402,12 @@ kwait(uint64 addr)
         if (pp->state == ZOMBIE) {
           // Found one.
           pid = pp->pid;
-          if (addr != 0 &&
+          if ((addr != 0 &&
               copyout(p->pagetable, p->sz, addr, (char *)&pp->xstate,
-                      sizeof(pp->xstate)) < 0) {
+                      sizeof(pp->xstate)) < 0) ||
+             (statsaddr != 0 &&
+              copyout(p->pagetable, p->sz, statsaddr, (char *)&pp->stats,
+                      sizeof(pp->stats)) < 0)) {
             release(&pp->lock);
             release(&wait_lock);
             return -1;
@@ -434,6 +435,8 @@ kwait(uint64 addr)
     acquire(&wait_lock);
   }
 }
+
+
 
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -468,10 +471,10 @@ scheduler(void)
 
         // Update wait time and set first_run
         // if it hasn't been set yet.
-        p->wait_time += ticks - p->last_change;
+        p->stats.wait_time += ticks - p->last_change;
         p->last_change = ticks;
-        if (p->first_run == (uint)-1)
-          p->first_run = ticks;
+        if (p->stats.first_run == (uint)-1)
+          p->stats.first_run = ticks;
 
         p->state = RUNNING;
         c->proc = p;
@@ -519,7 +522,7 @@ sched(void)
   intena = mycpu()->intena;
 
   // Record how long a process has run for so far
-  p->run_time += ticks - p->last_change;
+  p->stats.run_time += ticks - p->last_change;
   p->last_change = ticks;
 
   swtch(&p->context, &mycpu()->context);
